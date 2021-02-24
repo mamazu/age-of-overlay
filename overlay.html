@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overlay</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="mappingdata.js" defer></script>
+    <script defer>
+        function mapCiv(civId) {
+            return mappingData['civ'].find(x => x.id === civId).string;
+        }
+
+        function mapRatingType(ratingType) {
+            return mappingData['rating_type'].find(x => x.id === ratingType)?.string;
+        }
+
+        function mapMapType(mapType) {
+            return mappingData['map_type'].find(x => x.id === mapType).string;
+        }
+
+        function playerName(playerData) {
+            let playerName = playerData.name
+            if (playerData.rating) {
+                playerName += ` (${playerData.rating})`
+            }
+            return playerName
+        }
+
+        function renderAllPlayers(element, allPlayerData, startId) {
+            let elementContent = playerName(allPlayerData[startId])
+            for (let i = startId + 2; i < allPlayerData.length; i += 2) {
+                elementContent += ', ' + playerName(allPlayerData[i])
+            }
+            element.innerText = elementContent
+        }
+
+        function renderAllCivs(element, allPlayerData, startId) {
+            let elementContent = mapCiv(allPlayerData[startId].civ)
+            for (let i = startId + 2; i < allPlayerData.length; i += 2) {
+                elementContent += ', ' + mapCiv(allPlayerData[i].civ)
+            }
+            element.innerText = elementContent
+        }
+
+        function printMatchData(match) {
+            const playerData = match.players
+            renderAllPlayers(player1, playerData, 0)
+            renderAllPlayers(player2, playerData, 1)
+
+            renderAllCivs(player1Civ, playerData, 0)
+            renderAllCivs(player2Civ, playerData, 1)
+
+            map.innerText = mapMapType(match.map_type) + ` (${mapRatingType(match.rating_type)})`
+        }
+
+        function updateMatch() {
+            fetch('https://aoe2.net/api/player/lastmatch?game=aoe2de&steam_id=76561197988848434')
+                .then(response => response.json())
+                .then(json => printMatchData(json.last_match))
+        }
+
+        function updateFromId(matchId) {
+            fetch(`https://aoe2.net/api/match?game=aoe2de&match_id=${matchId}`)
+                .then(response => response.json())
+                .then(json => {
+                    console.log(json)
+                    printMatchData(json)
+                })
+        }
+    </script>
+</head>
+
+<body>
+    <div id="overlay">
+        <div id="row1">
+            <div id="player1">Player 1</div>
+            <div id="vs">vs</div>
+            <div id="player2">Player 2</div>
+        </div>
+        <div id=row2>
+            <div id="player1Civ">Civ 1</div>
+            <div id="map"> </div>
+            <div id="player2Civ">Civ 2</div>
+        </div>
+        <div id="info-dump"></div>
+    </div>
+    <script>
+        const player1 = document.querySelector('#player1');
+        const player2 = document.querySelector('#player2');
+        const player1Civ = document.querySelector('#player1Civ')
+        const player2Civ = document.querySelector('#player2Civ')
+        const map = document.querySelector('#map')
+        updateMatch()
+    </script>
+</body>
+
+</html>
